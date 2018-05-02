@@ -113,12 +113,12 @@ class Recomendador:
         '''
         Función utilizada en el momento de querer normalizar los datos por ahora se han ofrecido 2 técnicas
         pero ninguna ofrece mejore resultados que el no utilizar nada, se mantiene el método a la espera de
-        encontrar alguna técnica que mejore los resultados
+        TODO: encontrar alguna técnica que mejore los resultados
         _technique define la técnica
         '''
 
         if _technique == 'row':
-            ccd = sparse.spdiags(1. / self.table.sum(1).T, 0, *[table.shape[0], table.shape[0]])
+            ccd = sparse.spdiags(1. / self.table.sum(1).T, 0, *[self.table.shape[0], self.table.shape[0]])
             self.table = ccd * self.table
         elif _technique == 'weighted':
             nc = self.table.sum()
@@ -213,6 +213,6 @@ def run():
     rec.tipos_correctos()
     date = datetime.now() - relativedelta(years=2)
     rec.preprocess(date=date, k=10)
-    U, sigma, V = rec.SVD()
+    rec.SVD()
     rec.recommend_whole(k=5, num_batches=20)
     return rec

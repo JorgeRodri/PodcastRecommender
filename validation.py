@@ -46,7 +46,7 @@ def get_programs():
 
 
 print('Validar los resultados. Obteniendo el recomendador.')
-my_file = 'recommender_jorge_200_10.csv'
+my_file = 'TEsts/recommender_jorge_200_10.csv'
 r = read_recom(my_file)
 
 
@@ -81,6 +81,7 @@ if __name__ == '__main__':
             except KeyError:
                 print('User not in recommender. If you want to finish write: NO, Exit, exit, "", quit or Quit.\n')
                 continue
+        try:
             recoms = r[user]
             print(recoms)
             user_recommendation = programs[programs.id.isin(recoms)]
@@ -88,14 +89,5 @@ if __name__ == '__main__':
             user_recommendation.id.cat.set_categories(recoms, inplace=True)
             print(user_recommendation.sort_values("id"))
             print()
-        else:
-            try:
-                recoms = r[user]
-                print(recoms)
-                user_recommendation = programs[programs.id.isin(recoms)]
-                user_recommendation.loc[:, 'id'] = user_recommendation['id'].astype("category")
-                user_recommendation.id.cat.set_categories(recoms, inplace=True)
-                print(user_recommendation.sort_values("id"))
-                print()
-            except KeyError:
-                print('User not in recommender. If you want to finish write: NO, Exit, exit, "", quit or Quit.\n')
+        except KeyError:
+            print('User not in recommender. If you want to finish write: NO, Exit, exit, "", quit or Quit.\n')

@@ -5,6 +5,22 @@ from dateutil.relativedelta import relativedelta
 import numpy as np
 from scipy.sparse import linalg
 from MySQL.connection import getConnection
+import pymysql
+
+
+def __get_local_db__(file):
+    if file is None:
+        return pd.DataFrame()
+    df = pd.read_csv(file)
+    df = df[['userProgramDownload_fkuser',  'userProgramDownload_fkprogram',
+             'userProgramDownload_count', 'userProgramDownload_updated']]
+    df.columns = ['user_id', 'program_id', 'download_count', 'download_updated']
+
+    df["user_id"] = df["user_id"].astype(str)
+    df["program_id"] = df["program_id"].astype(str)
+    df['download_count'] = df['download_count'].astype(int)
+    df['download_updated'] = pd.to_datetime(df['download_updated'], errors='coerce')
+    return df
 
 
 def __get_db__(update, min_d, new=14):
@@ -32,6 +48,40 @@ def __get_db__(update, min_d, new=14):
     df["program_id"] = df["program_id"].astype(str)
     df['download_count'] = df['download_count'].astype(int)
     df['download_updated'] = pd.to_datetime(df['download_updated'], errors='coerce')
+    return df
+
+
+def get_db(file=None, **kwargs):
+    try:
+        df = __get_db__(**kwargs)
+    except pymysql.DataError as e:
+        print("DataError")
+        print(e)
+        df = __get_local_db__(file)
+    except pymysql.InternalError as e:
+        print("InternalError")
+        print(e)
+        df = __get_local_db__(file)
+    except pymysql.IntegrityError as e:
+        print("IntegrityError")
+        print(e)
+        df = __get_local_db__(file)
+    except pymysql.OperationalError as e:
+        print("OperationalError")
+        print(e)
+        df = __get_local_db__(file)
+    except pymysql.NotSupportedError as e:
+        print("NotSupportedError")
+        print(e)
+        df = __get_local_db__(file)
+    except pymysql.ProgrammingError as e:
+        print("ProgrammingError")
+        print(e)
+        df = __get_local_db__(file)
+    except Exception as e:
+        print(e)
+        print("Unknown error occurred")
+        df = __get_local_db__(file)
     return df
 
 
@@ -72,11 +122,14 @@ def run():
     days = 8
     last_listened_days = 40
     last_listened = datetime.now() - relativedelta(days=last_listened_days)
+    last_listened = datetime(2018, 1, 1, 0, 0, 1)
     k = 200
     num_recom = 10
 
     print('Getting data')
-    df = __get_db__(years, min_d, new=days)
+
+    file = 'data/downloads_user_program_20180111.csv'
+    df = get_db(file=file, update=years, min_d=min_d, new=days)
     print('Preprocessing')
     df = __preprocess__(df, 20, last_listened)
     df, table = get_table(df, __ones__=True)

@@ -2,6 +2,7 @@ import numpy as np
 import time
 from IRecom.functionalSVD import __get_dict__, recommend
 
+
 class SGDSVD:
     """A basic rating prediction algorithm based on matrix factorization."""
 
@@ -91,8 +92,7 @@ def recommend_whole(df, U, St, k, num_batches=10):
     Function that finds the recomendation from the user times programs times downloads table
     :param df: dataframe with data
     :param U: U from the SVD
-    :param sigma: sigma from SVD
-    :param V: V from SVD
+    :param St: sigma*V in the SVD decomposition
     :param k: number of recomendations for each users
     :param num_batches: number of batches in which the recomender should be trained, recommended >10
     :return: dictionary with the recomendations for each user
@@ -107,12 +107,12 @@ def recommend_whole(df, U, St, k, num_batches=10):
         batches = np.array_split(user_u, num_batches)
     all_recom = dict()
 
-    user_prog = __get_dict__(df) #es rapido, para lo que es
+    user_prog = __get_dict__(df)  # es rapido, para lo que es
 
     for i in range(num_batches):
         user_batch = batches[i]
         # t1 = time.time()
-        recom = recommend(U, St, user_batch, item_u, user_u, user_prog, k) #creo que se puede mejorar
+        recom = recommend(U, St, user_batch, item_u, user_u, user_prog, k)  # creo que se puede mejorar
         # t2 = time.time()
         # print('Time for a Batch: %.2f' % (t2-t1))
         # meter quitar los escuchados
