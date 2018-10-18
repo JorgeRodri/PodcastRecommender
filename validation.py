@@ -1,3 +1,4 @@
+import json
 import csv
 from MySQL.connection import getConnection
 import pandas as pd
@@ -34,7 +35,9 @@ def get_programs():
     function to get the table with the programs from the MySQL server.
     :return: DataFrame containing the programs and their information.
     """
-    connection = getConnection()
+    with open('C:/Users/jorge.rodriguez/PycharmProjects/iVooxPython/MySQL/credenciales_corrector.json', 'r') as f:
+        arch = json.loads(f.read())
+    connection = getConnection(arch)
     query = "SELECT programs_id, programs_name FROM ivoox.programs"
     df = pd.read_sql(query, con=connection)
 

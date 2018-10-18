@@ -102,7 +102,7 @@ def run(__limit__=None):
     t2 = time.time()
     min_d = 5
     years = 1
-    days = 8
+    days = 175
     last_listened_days = 40
     last_listened = datetime.now() - relativedelta(days=last_listened_days)
     if __limit__:
