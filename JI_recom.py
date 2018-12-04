@@ -30,9 +30,7 @@ def query_to_df(credenciales, query):
 
 def ji_cosine_similarity(X, Y=None, dense_output=True):
     X, Y = check_pairwise_arrays(X, Y)
-
     X_normalized = normalize(X, norm='l1', copy=True)
-
     K = safe_sparse_dot(X_normalized, Y.T,
                         dense_output=dense_output)
     return K
@@ -73,17 +71,40 @@ class JIRecommender:
         self.similarity = ji_cosine_similarity(self.table.T, dense_output=dense)
         return self.similarity
 
-    def retrieve_top(self, program, program_name, k=10):
-        if type(program) == str:
-            indx = self.processed_df[
-                        self.processed_df.suscription_filtervalue.map(program_name) == program]['col'].iloc[0]
+    def retrieve_top(self, program, namer, k=10):
+        try:
+            if type(program) == str:
+                indx = self.processed_df[
+                    self.processed_df.suscription_filtervalue.map(namer) == program]['col'].iloc[0]
+            else:
+                indx = self.processed_df[self.processed_df.suscription_filtervalue == program]['col'].iloc[0]
+        except IndexError as e:
+            print(program, e)
+            return [program], [1]
+
+        if k > 1:
+            top = list(map(lambda x: namer[x] if x != 0 else '',
+                           np.array(self.items)[
+                               np.reshape(np.array(np.argsort(self.similarity[indx].todense())[0, -1:-k - 1:-1]), k)]))
+            values = self.similarity[indx].todense()[
+                0, np.reshape(np.array(np.argsort(self.similarity[indx].todense())[0, -1:-k - 1:-1]), k)]
+            values = np.squeeze(np.asarray(values))
+
+            indexes = values.argsort()
+            top = np.array(top)[indexes[::-1]]
+            values = values[indexes[::-1]]
+        elif 0 < k < 1:
+            top = list(map(lambda x: namer[x] if x != 0 else '',
+                           np.array(self.items)[np.array(self.similarity[indx].todense() > 0.05)[0, :]]))
+            values = self.similarity[indx].todense()[np.array(self.similarity[indx].todense() > 0.05)]
+            values = np.squeeze(np.asarray(values))
+
+            indexes = values.argsort()
+            top = np.array(top)[indexes[::-1]]
+            values = values[indexes[::-1]]
         else:
-            indx = self.processed_df[self.processed_df.suscription_filtervalue == program]['col'].iloc[0]
-        top = list(map(lambda x: program_name[x] if x != 0 else '',
-                       np.array(self.items)[
-                           np.reshape(np.array(np.argsort(self.similarity[indx].todense())[0, -1:-k - 1:-1]), k)]))
-        values = self.similarity[indx].todense()[
-                            0, np.reshape(np.array(np.argsort(self.similarity[indx].todense())[0, -1:-k - 1:-1]), k)]
+            top = [program] if type(program) == str else [namer[program]]
+            values = [1]
         return top, values
 
 
@@ -102,7 +123,15 @@ if __name__ == '__main__':
     recommender = JIRecommender(suscriptions)
     recommender.get_table(11)
     recommender.fit()
-    a, b = recommender.retrieve_top(163595, program_name, 10)
-    print(a)
-    print(b)
-
+    while True:
+        program = input('Program name or id: ')
+        try:
+            try:
+                program = int(program)
+                a, b = recommender.retrieve_top(program, program_name, 10)
+                print(pd.DataFrame(data={'Programa': a, 'Valor': b}))
+            except ValueError:
+                a, b = recommender.retrieve_top(str(program), program_name, 10)
+                print(pd.DataFrame(data={'Programa': a, 'Valor': b}))
+        except IndexError as e:
+            print('Error in program', e)
